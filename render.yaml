@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ruthys-eatery-booking-system
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: NODE_ENV
+        value: production
+      - key: AUTO_MIGRATE
+        value: true
+      - key: DB_SSL
+        value: true
+      - key: JWT_SECRET
+        generateValue: true
