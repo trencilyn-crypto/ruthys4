@@ -1,55 +1,23 @@
-const mysql = require('mysql2/promise');
+const db = require('./src/db');
 
-let pool;
+async function initDb() {
+  await db.query(`CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    password VARCHAR(255),
+    role ENUM('customer','admin') DEFAULT 'customer'
+  )`);
 
-function getDbConfig() {
-  const sslEnabled = String(process.env.DB_SSL || '').toLowerCase() === 'true';
+  await db.query(`CREATE TABLE IF NOT EXISTS reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    date DATE,
+    time TIME,
+    people INT,
+    status ENUM('pending','confirmed','completed','cancelled') DEFAULT 'pending',
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`);
 
-  if (process.env.DATABASE_URL) {
-    const config = {
-      uri: process.env.DATABASE_URL,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-      multipleStatements: false
-    };
-
-    if (sslEnabled) {
-      config.ssl = { rejectUnauthorized: false };
-    }
-
-    return config;
-  }
-
-  const config = {
-    host: process.env.DB_HOST || 'localhost',
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'ruthys_eatery',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    multipleStatements: false
-  };
-
-  if (sslEnabled) {
-    config.ssl = { rejectUnauthorized: false };
-  }
-
-  return config;
+  console.log('Tables created or exist already');
 }
-
-function getPool() {
-  if (!pool) {
-    pool = mysql.createPool(getDbConfig());
-  }
-  return pool;
-}
-
-async function query(sql, params = []) {
-  const [rows] = await getPool().execute(sql, params);
-  return rows;
-}
-
-module.exports = { getPool, query };
